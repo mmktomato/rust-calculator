@@ -1,0 +1,6 @@
+[package]
+name = "rust-calculator"
+version = "0.0.1"
+authors = ["mmktomato"]
+
+[dependencies]
