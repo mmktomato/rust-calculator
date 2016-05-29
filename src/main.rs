@@ -13,11 +13,11 @@ fn main() {
 
     // validate.
     validate(&tokens);
+    println!("expression is '{}' .", tokenutil::join(&tokens, " "));
 
     // calculate.
     let res = calculate(&tokens);
 
-    println!("expression is '{}' .", tokenutil::join(&tokens, " "));
     println!("result is {} .", res);
 }
 
@@ -108,6 +108,72 @@ fn validate(tokens :&Vec<tokenutil::TokenType>) {
 }
 
 // calculate!
-fn calculate(tokens :&Vec<tokenutil::TokenType>) -> f64 {
+fn calculate(tokens: &Vec<tokenutil::TokenType>) -> f32 {
+    if tokens.len() == 1 {
+        return match tokens[0] {
+            tokenutil::TokenType::Number(n) => n,
+            _ => panic!("TODO: fix err message.")
+        }
+    }
+
+    let fn_calc3 = |token_n1: &tokenutil::TokenType, token_operator: &tokenutil::TokenType, token_n2: &tokenutil::TokenType| {
+        match (token_n1, token_operator, token_n2) {
+            (&tokenutil::TokenType::Number(n1), &tokenutil::TokenType::Operator(o), &tokenutil::TokenType::Number(n2)) => {
+                match o {
+                    "+" => n1 + n2,
+                    "-" => n1 - n2,
+                    "*" => n1 * n2,
+                    "/" => n1 / n2,
+                    _ => panic!("TODO: fix err message.")
+                }
+            },
+            _ => panic!("TODO: fix err message")
+        }
+    };
+
+    if tokens.len() == 3 {
+        return fn_calc3(&tokens[0], &tokens[1], &tokens[2])
+    }
+    else {
+        for operator in ["/", "*", "+", "-"].iter() {
+            let pos = tokens
+                .iter()
+                .position(|ref token|
+                          if let &tokenutil::TokenType::Operator(o) = *token {
+                              &o == operator
+                          }
+                          else {
+                              false
+                          });
+
+            if pos.is_some() {
+                let pos_operator = pos.unwrap();
+                let pos_n1 = pos_operator - 1;
+                let pos_n2 = pos_operator + 1;
+
+                let new_num = fn_calc3(&tokens[pos_n1], &tokens[pos_operator], &tokens[pos_n2]);
+                let mut new_tokens :Vec<tokenutil::TokenType> = Vec::new();
+                for token in tokens.iter() {
+                    // copy token.
+                    // TODO: copy trait
+                    let new_token = match *token {
+                        tokenutil::TokenType::Number(n) => tokenutil::TokenType::Number(n),
+                        tokenutil::TokenType::Operator(o) => tokenutil::TokenType::Operator(o)
+                    };
+
+                    new_tokens.push(new_token);
+                }
+
+                new_tokens.remove(pos_n1);
+                new_tokens.remove(pos_operator);
+                new_tokens.remove(pos_n1);
+                new_tokens.insert(pos_n1, tokenutil::TokenType::Number(new_num));
+
+                println!("{}", tokenutil::join(&new_tokens, " "));
+                return calculate(&new_tokens)
+            }
+        }
+    }
+    panic!("TODO: fix err message")
 }
 
